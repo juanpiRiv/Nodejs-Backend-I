@@ -1,20 +1,15 @@
-const express = require('express');
-const router = express.Router();
-const ProductManager = require('../models/ProductManager');
+import express from 'express';
+import ProductManager from '../models/ProductManager.js';
 
-// Instancia del manejador de productos
-const productManager = new ProductManager('./data/products.json');
+const router = express.Router();
+const productManager = new ProductManager('products.json');
 
 // GET /api/products
 router.get('/', async (req, res) => {
     try {
         const products = await productManager.getProducts();
         const limit = req.query.limit;
-        if (limit) {
-            res.json(products.slice(0, parseInt(limit)));
-        } else {
-            res.json(products);
-        }
+        res.json(limit ? products.slice(0, parseInt(limit)) : products);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -24,22 +19,17 @@ router.get('/', async (req, res) => {
 router.get('/:pid', async (req, res) => {
     try {
         const product = await productManager.getProductById(req.params.pid);
-        if (product) {
-            res.json(product);
-        } else {
-            res.status(404).json({ error: 'Producto no encontrado' });
-        }
+        res.json(product);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(404).json({ error: error.message });
     }
 });
 
 // POST /api/products
 router.post('/', async (req, res) => {
     try {
-        const newProduct = req.body;
-        const addedProduct = await productManager.addProduct(newProduct);
-        res.status(201).json(addedProduct);
+        const newProduct = await productManager.addProduct(req.body);
+        res.status(201).json(newProduct);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -65,4 +55,4 @@ router.delete('/:pid', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

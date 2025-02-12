@@ -1,8 +1,10 @@
-const fs = require('fs').promises;
+import fs from 'fs/promises';
+import path from 'path';
+import { __dirname } from '../config/utils.js';  // Importamos __dirname
 
 class ProductManager {
-    constructor(path) {
-        this.path = path;
+    constructor(filePath) {
+        this.path = path.resolve('src/data', filePath)
         this.products = [];
         this.initialize();
     }
@@ -13,7 +15,9 @@ class ProductManager {
             const data = await fs.readFile(this.path, 'utf-8');
             this.products = JSON.parse(data);
         } catch (error) {
+            console.error('Error al leer el archivo, inicializando como vacío:', error.message);
             await fs.writeFile(this.path, '[]');
+            this.products = [];
         }
     }
 
@@ -62,15 +66,9 @@ class ProductManager {
             throw new Error('Producto no encontrado');
         }
 
-        const updatedProduct = {
-            ...this.products[index],
-            ...updates,
-            id: parseInt(id)
-        };
-
-        this.products[index] = updatedProduct;
+        this.products[index] = { ...this.products[index], ...updates, id: parseInt(id) };
         await this.saveProducts();
-        return updatedProduct;
+        return this.products[index];
     }
 
     async deleteProduct(id) {
@@ -84,8 +82,12 @@ class ProductManager {
     }
 
     async saveProducts() {
-        await fs.writeFile(this.path, JSON.stringify(this.products, null, 2));
+        try {
+            await fs.writeFile(this.path, JSON.stringify(this.products, null, 2));
+        } catch (error) {
+            console.error('Error al guardar los productos:', error.message);
+        }
     }
 }
 
-module.exports = ProductManager;
+export default ProductManager;

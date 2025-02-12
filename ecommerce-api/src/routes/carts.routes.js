@@ -1,8 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const CartManager = require('../models/CartManager');
+import express from 'express';
+import CartManager from '../models/CartManager.js';
 
-const cartManager = new CartManager('./data/carts.json');
+const router = express.Router();
+const cartManager = new CartManager('carts.json'); // Ajusta la ruta si es necesario
 
 // POST /api/carts
 router.post('/', async (req, res) => {
@@ -34,4 +34,4 @@ router.post('/:cid/product/:pid', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

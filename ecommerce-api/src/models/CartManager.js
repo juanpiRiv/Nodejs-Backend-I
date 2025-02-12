@@ -1,8 +1,10 @@
-const fs = require('fs').promises;
+import fs from 'fs/promises';
+import path from 'path';
+import { __dirname } from '../config/utils.js';  // Importamos __dirname
 
 class CartManager {
-    constructor(path) {
-        this.path = path;
+    constructor(filePath) {
+        this.path = path.resolve('src/data', filePath)
         this.carts = [];
         this.initialize();
     }
@@ -12,8 +14,10 @@ class CartManager {
             await fs.access(this.path);
             const data = await fs.readFile(this.path, 'utf-8');
             this.carts = JSON.parse(data);
-        } catch {
+        } catch (error) {
+            console.error('Error al leer el archivo, inicializando como vacío:', error.message);
             await fs.writeFile(this.path, '[]');
+            this.carts = [];
         }
     }
 
@@ -54,8 +58,12 @@ class CartManager {
     }
 
     async saveCarts() {
-        await fs.writeFile(this.path, JSON.stringify(this.carts, null, 2));
+        try {
+            await fs.writeFile(this.path, JSON.stringify(this.carts, null, 2));
+        } catch (error) {
+            console.error('Error al guardar los carritos:', error.message);
+        }
     }
 }
 
-module.exports = CartManager;
+export default CartManager;

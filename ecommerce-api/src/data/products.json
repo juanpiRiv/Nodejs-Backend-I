@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "title": "Producto de prueba",
+    "description": "Descripción de prueba",
+    "code": "ABC123",
+    "price": 1000,
+    "status": true,
+    "stock": 10,
+    "category": "test",
+    "thumbnails": []
+  },
+  {
+    "id": 2,
+    "title": "Producto de prueba put",
+    "description": "Descripción de prueba put",
+    "code": "ABC12323222 ",
+    "price": 1010,
+    "status": true,
+    "stock": 20,
+    "category": "test4put",
+    "thumbnails": []
+  },
+  {
+    "id": 3,
+    "title": "Producto de prueba 123",
+    "description": "Descripción de prueba 4",
+    "code": "ABC123232 ",
+    "price": 1010,
+    "status": true,
+    "stock": 20,
+    "category": "test4",
+    "thumbnails": []
+  }
+]

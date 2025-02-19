@@ -20,16 +20,5 @@
     "stock": 20,
     "category": "test4put",
     "thumbnails": []
-  },
-  {
-    "id": 3,
-    "title": "Producto de prueba 123",
-    "description": "Descripción de prueba 4",
-    "code": "ABC123232 ",
-    "price": 1010,
-    "status": true,
-    "stock": 20,
-    "category": "test4",
-    "thumbnails": []
   }
 ]

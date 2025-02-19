@@ -1,0 +1,51 @@
+<h1>{{title}}</h1>
+
+<ul id="product-list">
+    {{#each products}}
+        <li>
+            {{this.name}} - ${{this.price}}
+            <button onclick="deleteProduct('{{this.id}}')">🗑 Eliminar</button>
+        </li>
+    {{/each}}
+</ul>
+
+<form id="product-form">
+    <input type="text" id="name" placeholder="Nombre del producto" required />
+    <input type="number" id="price" placeholder="Precio" required />
+    <button type="submit">Agregar Producto</button>
+</form>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    // Escuchar actualización de productos
+    socket.on('updateProducts', (products) => {
+        const list = document.getElementById('product-list');
+        list.innerHTML = '';
+        products.forEach(product => {
+            const item = document.createElement('li');
+            item.innerHTML = `${product.name} - $${product.price}
+                <button onclick="deleteProduct('${product.id}')">🗑 Eliminar</button>`;
+            list.appendChild(item);
+        });
+    });
+
+    // Enviar nuevo producto por WebSockets
+    document.getElementById('product-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        
+        const name = document.getElementById('name').value;
+        const price = document.getElementById('price').value;
+        
+        socket.emit('newProduct', { name, price });
+
+        document.getElementById('name').value = '';
+        document.getElementById('price').value = '';
+    });
+
+    // Enviar solicitud para eliminar un producto
+    function deleteProduct(id) {
+        socket.emit('deleteProduct', id);
+    }
+</script>

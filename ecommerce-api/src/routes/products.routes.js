@@ -29,9 +29,12 @@ router.get('/:pid', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const newProduct = await productManager.addProduct(req.body);
+        if (!newProduct) {
+            return res.status(400).json({ error: "Error al agregar el producto. Verifica los datos." });
+        }
         res.status(201).json(newProduct);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 });
 

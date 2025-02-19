@@ -21,33 +21,35 @@ class ProductManager {
         }
     }
 
-    async addProduct({ title, description, code, price, status = true, stock, category, thumbnails = [] }) {
+    async addProduct({ title, description, code, price, stock, category, thumbnails = [] }) {
         if (!title || !description || !code || !price || !stock || !category) {
-            throw new Error('Todos los campos son obligatorios excepto thumbnails');
+            console.error("❌ Error: Faltan campos obligatorios.");
+            return null;
         }
-
+    
         const exists = this.products.some(product => product.code === code);
         if (exists) {
-            throw new Error('El código del producto ya existe');
+            console.error("❌ Error: El código del producto ya existe.");
+            return null;
         }
-
+    
         const newProduct = {
             id: this.products.length === 0 ? 1 : Math.max(...this.products.map(p => p.id)) + 1,
             title,
             description,
             code,
-            price,
-            status,
-            stock,
+            price: Number(price),
+            stock: Number(stock),
             category,
+            status: true,
             thumbnails
         };
-
+    
         this.products.push(newProduct);
         await this.saveProducts();
         return newProduct;
     }
-
+    
     async getProducts() {
         return this.products;
     }

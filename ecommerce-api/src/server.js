@@ -4,26 +4,29 @@ import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
+import mongoose from 'mongoose';
 import productsRouter from './routes/products.routes.js';
 import cartsRouter from './routes/carts.routes.js';
 import ProductManager from './models/ProductManager.js';
+import { config } from './config/config.js'; // Importamos config
+
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const productManager = new ProductManager('products.json'); // ✅ Instanciamos ProductManager correctamente
+const productManager = new ProductManager('products.json'); 
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-// Configurar Handlebars como motor de plantillas
+//INIZIALIZO MI MOTOR DE PLANTILLAS Y LO CONFIGURO
 app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware para archivos estáticos y parsing de JSON
+//usos json y config serv
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -93,10 +96,13 @@ io.on('connection', async (socket) => {
     });
 });
 
+mongoose.connect(config.URL_MONGODB)
+    .then(()=> console.log(`Conectado a MongoDB ${config.URL_MONGODB}`))
+    .catch( (error)=>{ 
+        console.log('Error al conectar a MongoDB');
+        process.exit();
+    });
 // Levantar el servidor
-const PORT = 8080;
-server.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+server.listen(config.PORT, () => console.log(`Servidor corriendo en ${config.PORT}`));
 
 export { io }; // Exportamos io después de levantar el servidor

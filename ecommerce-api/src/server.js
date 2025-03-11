@@ -7,8 +7,9 @@ import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import productsRoutes from './routes/products.routes.js';
 import cartsRoutes from './routes/carts.routes.js';
+import viewsRoutes from './routes/views.routes.js'; // 🚀 Nueva ruta de vistas
 import { config } from './config/config.js';
-import Product from './models/Product.model.js';
+import ProductManager from './models/ProductManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
+
+const productManager = new ProductManager();
 
 // Configurar Handlebars
 app.engine('handlebars', engine());
@@ -27,40 +30,40 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Depuración de rutas
-console.log('Cargando rutas...');
-console.log('productsRoutes:', productsRoutes);
-console.log('cartsRoutes:', cartsRoutes);
-
 // Rutas de la API
 app.use('/api/products', productsRoutes);
 app.use('/api/carts', cartsRoutes);
-
-// Renderizar vista home con productos desde MongoDB
-app.get('/', async (req, res) => {
-    try {
-        const products = await Product.find();
-        res.render('home', { title: 'Lista de Productos', products });
-    } catch (error) {
-        res.status(500).send("Error al cargar los productos.");
-    }
-});
-
-// Renderizar vista de productos en tiempo real
-app.get('/realtimeproducts', async (req, res) => {
-    try {
-        const products = await Product.find();
-        res.render('realTimeProducts', { title: 'Productos en Tiempo Real', products });
-    } catch (error) {
-        res.status(500).send("Error al cargar los productos.");
-    }
-});
+app.use('/', viewsRoutes); // 🚀 Agregamos las vistas
 
 // Configuración de WebSockets
-io.on('connection', (socket) => {
-    console.log('Cliente conectado');
+io.on('connection', async (socket) => {
+    console.log('⚡ Cliente conectado');
+
+    // Enviar productos actuales al cliente
+    socket.emit('updateProducts', await productManager.getProducts({}));
+
+    // Escuchar productos nuevos
+    socket.on('newProduct', async (productData) => {
+        try {
+            const newProduct = await productManager.addProduct(productData);
+            io.emit('updateProducts', await productManager.getProducts({}));
+        } catch (error) {
+            console.error('❌ Error al agregar producto:', error.message);
+        }
+    });
+
+    // Escuchar eliminación de productos
+    socket.on('deleteProduct', async (productId) => {
+        try {
+            await productManager.deleteProduct(productId);
+            io.emit('updateProducts', await productManager.getProducts({}));
+        } catch (error) {
+            console.error('❌ Error al eliminar producto:', error.message);
+        }
+    });
+
     socket.on('disconnect', () => {
-        console.log('Cliente desconectado');
+        console.log('🔌 Cliente desconectado');
     });
 });
 

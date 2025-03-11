@@ -1,0 +1,48 @@
+<h1>Carrito de Compras</h1>
+
+{{#if cart.products.length}}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each cart.products}}
+            <tr>
+                <td>{{this.product.title}}</td>
+                <td>${{this.product.price}}</td>
+                <td>{{this.quantity}}</td>
+                <td>
+                    <button onclick="removeFromCart('{{../cart._id}}', '{{this.product._id}}')">Eliminar</button>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <button onclick="emptyCart('{{cart._id}}')">Vaciar carrito</button>
+{{else}}
+    <p>Tu carrito está vacío</p>
+{{/if}}
+
+<script>
+function removeFromCart(cartId, productId) {
+    fetch(`/api/carts/${cartId}/products/${productId}`, {
+        method: "DELETE"
+    }).then(response => {
+        if (response.ok) location.reload();
+    });
+}
+
+function emptyCart(cartId) {
+    fetch(`/api/carts/${cartId}`, {
+        method: "DELETE"
+    }).then(response => {
+        if (response.ok) location.reload();
+    });
+}
+</script>

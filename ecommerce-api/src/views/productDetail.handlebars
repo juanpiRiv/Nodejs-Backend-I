@@ -1,22 +1,15 @@
 <h1>{{product.title}}</h1>
-
-<p><strong>Descripción:</strong> {{product.description}}</p>
+<img src="{{product.thumbnails.[0]}}" alt="{{product.title}}" width="200">
 <p><strong>Precio:</strong> ${{product.price}}</p>
 <p><strong>Categoría:</strong> {{product.category}}</p>
-<p><strong>Stock:</strong> {{product.stock}}</p>
+<p><strong>Descripción:</strong> {{product.description}}</p>
 
-<button onclick="addToCart('{{product._id}}')">Agregar al carrito</button>
+<!-- Formulario para seleccionar cantidad y agregar al carrito -->
+<form action="/api/carts/add-product" method="POST">
+    <input type="hidden" name="productId" value="{{product._id}}">
+    <label for="quantity">Cantidad:</label>
+    <input type="number" name="quantity" value="1" min="1">
+    <button type="submit">Agregar al Carrito</button>
+</form>
 
-<a href="/products">Volver</a>
-
-<script>
-function addToCart(productId) {
-    fetch(`/api/carts/1/products/${productId}`, {  // Cambiar 1 por el ID real
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity: 1 })
-    }).then(response => {
-        if (response.ok) alert("Producto agregado al carrito");
-    });
-}
-</script>
+<a href="/products">Volver a la lista de productos</a>

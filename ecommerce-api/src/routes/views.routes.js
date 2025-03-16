@@ -1,26 +1,66 @@
 import express from 'express';
-import ProductManager from '../models/ProductManager.js';
-import CartManager from '../models/CartManager.js';
+import Product from '../models/Product.model.js';
+import Cart from '../models/Cart.model.js';
 
 const router = express.Router();
-const productManager = new ProductManager();
-const cartManager = new CartManager();
 
+// ✅ Redirigir la ruta raíz ("/") a "/products"
+router.get('/', (req, res) => {
+    res.redirect('/products');
+});
+
+// ✅ Mostrar productos con paginación
 router.get('/products', async (req, res) => {
     try {
-        const products = await productManager.getProducts(req.query);
-        products.prevLink = products.hasPrevPage ? `/products?page=${products.prevPage}` : null;
-        products.nextLink = products.hasNextPage ? `/products?page=${products.nextPage}` : null;
+        const { limit = 10, page = 1, query, sort } = req.query;
+        const filter = query ? { category: query } : {}; 
+        const options = {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {}
+        };
 
-        res.render('products', { title: 'Productos', ...products });
+        const products = await Product.paginate(filter, options); 
+
+        console.log("📌 Datos enviados a Handlebars:", products.docs);  // <-- Verifica los datos antes de renderizar
+
+        res.render('products', {
+            title: 'Productos',
+            payload: products.docs,  
+            totalPages: products.totalPages,
+            prevPage: products.prevPage,
+            nextPage: products.nextPage,
+            page: products.page,
+            hasPrevPage: products.hasPrevPage,
+            hasNextPage: products.hasNextPage,
+            prevLink: products.hasPrevPage ? `/products?page=${products.prevPage}` : null,
+            nextLink: products.hasNextPage ? `/products?page=${products.nextPage}` : null
+        });
     } catch (error) {
         res.status(500).send('Error al cargar los productos');
     }
 });
 
+
+// ✅ Ruta para mostrar el carrito en Handlebars
+router.get('/cart', async (req, res) => {
+    try {
+        const cart = await Cart.findById(req.session.cartId).populate('products.product');
+
+        if (!cart) {
+            return res.render('cart', { title: "Carrito de Compras", cart: { products: [] } });
+        }
+
+        res.render('cart', { title: "Carrito de Compras", cart });
+    } catch (error) {
+        res.status(500).send('Error al cargar el carrito');
+    }
+});
+
+// ✅ Ver detalle de un producto
 router.get('/products/:pid', async (req, res) => {
     try {
-        const product = await productManager.getProductById(req.params.pid);
+        const product = await Product.findById(req.params.pid);
         if (!product) return res.status(404).send('Producto no encontrado');
 
         res.render('productDetail', { title: product.title, product });
@@ -29,9 +69,10 @@ router.get('/products/:pid', async (req, res) => {
     }
 });
 
+// ✅ Mostrar carrito
 router.get('/carts/:cid', async (req, res) => {
     try {
-        const cart = await cartManager.getCartById(req.params.cid);
+        const cart = await Cart.findById(req.params.cid).populate('products.product');
         if (!cart) return res.status(404).send('Carrito no encontrado');
 
         res.render('cart', { title: 'Carrito', cart });

@@ -2,47 +2,38 @@
 
 {{#if cart.products.length}}
     <table border="1">
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Precio</th>
-                <th>Cantidad</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{#each cart.products}}
-            <tr>
-                <td>{{this.product.title}}</td>
-                <td>${{this.product.price}}</td>
-                <td>{{this.quantity}}</td>
-                <td>
-                    <button onclick="removeFromCart('{{../cart._id}}', '{{this.product._id}}')">Eliminar</button>
-                </td>
-            </tr>
-            {{/each}}
-        </tbody>
+        <tr>
+            <th>Imagen</th>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+            <th>Acciones</th>
+        </tr>
+        {{#each cart.products}}
+        <tr>
+            <td><img src="{{this.product.thumbnails.[0]}}" alt="{{this.product.title}}" width="50"></td>
+            <td>{{this.product.title}}</td>
+            <td>${{this.product.price}}</td>
+            <td>
+                <form action="/api/carts/{{../cart._id}}/products/{{this.product._id}}?_method=PUT" method="POST">
+                    <input type="number" name="quantity" value="{{this.quantity}}" min="1">
+                    <button type="submit">Actualizar</button>
+                </form>
+            </td>
+            <td>${{multiply this.product.price this.quantity}}</td>
+            <td>
+                <form action="/api/carts/{{../cart._id}}/products/{{this.product._id}}?_method=DELETE" method="POST">
+                    <button type="submit">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+        {{/each}}
     </table>
 
-    <button onclick="emptyCart('{{cart._id}}')">Vaciar carrito</button>
+    <form action="/api/carts/{{cart._id}}/checkout?_method=POST" method="POST">
+        <button type="submit">Finalizar Compra</button>
+    </form>
 {{else}}
-    <p>Tu carrito está vacío</p>
+    <p>⚠ El carrito está vacío. <a href="/products">Ir a la tienda</a></p>
 {{/if}}
-
-<script>
-function removeFromCart(cartId, productId) {
-    fetch(`/api/carts/${cartId}/products/${productId}`, {
-        method: "DELETE"
-    }).then(response => {
-        if (response.ok) location.reload();
-    });
-}
-
-function emptyCart(cartId) {
-    fetch(`/api/carts/${cartId}`, {
-        method: "DELETE"
-    }).then(response => {
-        if (response.ok) location.reload();
-    });
-}
-</script>

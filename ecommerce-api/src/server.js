@@ -1,81 +1,64 @@
 import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import productsRouter from './routes/products.routes.js';
+import cartsRouter from './routes/carts.routes.js';
+import viewsRouter from './routes/views.routes.js';
 import { engine } from 'express-handlebars';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import mongoose from 'mongoose';
-import productsRoutes from './routes/products.routes.js';
-import cartsRoutes from './routes/carts.routes.js';
-import viewsRoutes from './routes/views.routes.js'; // 🚀 Nueva ruta de vistas
-import { config } from './config/config.js';
-import ProductManager from './models/ProductManager.js';
+import session from 'express-session';
+import methodOverride from 'method-override'; 
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Cargar variables de entorno
+dotenv.config();
 
+// Configurar Express
 const app = express();
-const server = createServer(app);
-const io = new Server(server);
+const PORT = process.env.PORT || 8080;
 
-const productManager = new ProductManager();
-
-// Configurar Handlebars
-app.engine('handlebars', engine());
-app.set('view engine', 'handlebars');
-app.set('views', path.join(__dirname, 'views'));
-
-// Middleware para archivos estáticos y JSON
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Rutas de la API
-app.use('/api/products', productsRoutes);
-app.use('/api/carts', cartsRoutes);
-app.use('/', viewsRoutes); // 🚀 Agregamos las vistas
-
-// Configuración de WebSockets
-io.on('connection', async (socket) => {
-    console.log('⚡ Cliente conectado');
-
-    // Enviar productos actuales al cliente
-    socket.emit('updateProducts', await productManager.getProducts({}));
-
-    // Escuchar productos nuevos
-    socket.on('newProduct', async (productData) => {
-        try {
-            const newProduct = await productManager.addProduct(productData);
-            io.emit('updateProducts', await productManager.getProducts({}));
-        } catch (error) {
-            console.error('❌ Error al agregar producto:', error.message);
-        }
-    });
-
-    // Escuchar eliminación de productos
-    socket.on('deleteProduct', async (productId) => {
-        try {
-            await productManager.deleteProduct(productId);
-            io.emit('updateProducts', await productManager.getProducts({}));
-        } catch (error) {
-            console.error('❌ Error al eliminar producto:', error.message);
-        }
-    });
-
-    socket.on('disconnect', () => {
-        console.log('🔌 Cliente desconectado');
-    });
+app.use(session({
+    secret: 'miclavedeprueba',  // 🔥 Cambiar por una clave más segura
+    resave: false,
+    saveUninitialized: true
+}));
+// Registrar el helper "multiply" para Handlebars
+const hbs = engine({
+    runtimeOptions: {
+        allowProtoPropertiesByDefault: true,
+        allowProtoMethodsByDefault: true
+    },
+    helpers: {
+        multiply: (a, b) => a * b  // 🔥 Agregamos la función "multiply"
+    }
 });
 
-// Conectar a MongoDB
-mongoose.connect(config.URL_MONGODB)
-    .then(() => console.log(`✅ Conectado a MongoDB en ${config.URL_MONGODB}`))
-    .catch((error) => {
-        console.error('❌ Error al conectar a MongoDB:', error);
+app.engine('handlebars', hbs);
+app.set('view engine', 'handlebars');
+app.set('views', path.resolve('src/views'));
+
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
+// Rutas
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
+app.use('/', viewsRouter);
+
+// Conexión a MongoDB
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('✅ Conectado a MongoDB');
+    } catch (error) {
+        console.error('❌ Error conectando a MongoDB:', error.message);
         process.exit(1);
+    }
+};
+
+// Iniciar el servidor
+connectDB().then(() => {
+    app.listen(PORT, () => {
+        console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
     });
-
-// Levantar el servidor
-server.listen(config.PORT, () => console.log(`🚀 Servidor corriendo en puerto ${config.PORT}`));
-
-export { io };
+});

@@ -12,7 +12,7 @@
         </tr>
         {{#each cart.products}}
         <tr>
-            <td><img src="{{this.product.thumbnails[0]}}" width="50"></td>
+            <td><img src="{{this.product.thumbnails.[0]}}" width="50"></td>
             <td>{{this.product.title}}</td>
             <td>${{this.product.price}}</td>
             <td>

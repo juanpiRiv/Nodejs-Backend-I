@@ -1,5 +1,7 @@
 <h1>Lista de Productos</h1>
 
+<a href="/cart"><button>🛒 Ver Carrito</button></a>  
+
 <table border="1">
     <tr>
         <th>Imagen</th>
@@ -10,18 +12,21 @@
     </tr>
     {{#each payload}}
     <tr>
-        <td><img src="{{this.thumbnails.[0]}}" alt="{{this.title}}" width="50"></td>
+        <td><img src="{{this.thumbnails.[0]}}" width="50"></td>
         <td>{{this.title}}</td>
         <td>${{this.price}}</td>
         <td>{{this.category}}</td>
         <td>
-            <a href="/products/{{this._id}}">Ver Detalles</a>
+            <form action="/api/carts/add-product" method="POST">
+                <input type="hidden" name="productId" value="{{this._id}}">
+                <input type="number" name="quantity" value="1" min="1">
+                <button type="submit">Agregar al Carrito</button>
+            </form>
         </td>
     </tr>
     {{/each}}
 </table>
 
-<!-- Controles de paginación -->
 {{#if hasPrevPage}}
     <a href="{{prevLink}}">Página Anterior</a>
 {{/if}}

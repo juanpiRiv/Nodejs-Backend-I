@@ -3,30 +3,52 @@ import Product from '../models/Product.model.js';
 // ✅ Obtener productos con filtros, paginación y ordenamiento
 export const getProducts = async (req, res) => {
     try {
-        const { page = 1, limit = 10, sort, query } = req.query;
-        const filter = query ? { category: query } : {}; // Filtrar por categoría si se pasa query
-        const sortOption = sort === "asc" ? { price: 1 } : sort === "desc" ? { price: -1 } : {}; // Ordenar por precio
+        let { page = 1, limit = 10, sort, query } = req.query;
+        
+        // Validar que page y limit sean números positivos
+        page = parseInt(page) > 0 ? parseInt(page) : 1;
+        limit = parseInt(limit) > 0 ? parseInt(limit) : 10;
+
+        // Filtros mejorados: Buscar por categoría, disponibilidad o nombre
+        let filter = {};
+        if (query) {
+            filter = {
+                $or: [
+                    { category: { $regex: query, $options: "i" } }, // Filtra por categoría (insensible a mayúsculas)
+                    { title: { $regex: query, $options: "i" } }, // Filtra por nombre del producto
+                    { status: query.toLowerCase() === "disponible" ? true : false } // Filtra por disponibilidad
+                ]
+            };
+        }
+
+        // Opciones de ordenamiento (ascendente o descendente por precio)
+        const sortOption = sort === "asc" ? { price: 1 } : sort === "desc" ? { price: -1 } : {};
 
         const options = {
-            page: parseInt(page),
-            limit: parseInt(limit),
-            sort: sortOption
+            page,
+            limit,
+            sort: sortOption,
+            lean: true, // Optimización para obtener JSON plano
         };
 
-        const products = await Product.paginate(filter, options);
+        // Consulta a MongoDB usando `paginate`
+        const result = await Product.paginate(filter, options);
 
-        res.json({
+        // Construcción de respuesta
+        const response = {
             status: "success",
-            payload: products.docs,
-            totalPages: products.totalPages,
-            prevPage: products.hasPrevPage ? products.prevPage : null,
-            nextPage: products.hasNextPage ? products.nextPage : null,
-            page: products.page,
-            hasPrevPage: products.hasPrevPage,
-            hasNextPage: products.hasNextPage,
-            prevLink: products.hasPrevPage ? `/api/products?page=${products.prevPage}` : null,
-            nextLink: products.hasNextPage ? `/api/products?page=${products.nextPage}` : null
-        });
+            payload: result.docs,
+            totalPages: result.totalPages,
+            prevPage: result.prevPage,
+            nextPage: result.nextPage,
+            page: result.page,
+            hasPrevPage: result.hasPrevPage,
+            hasNextPage: result.hasNextPage,
+            prevLink: result.hasPrevPage ? `/api/products?page=${result.prevPage}&limit=${limit}&sort=${sort}&query=${query}` : null,
+            nextLink: result.hasNextPage ? `/api/products?page=${result.nextPage}&limit=${limit}&sort=${sort}&query=${query}` : null,
+        };
+
+        res.json(response);
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });
     }

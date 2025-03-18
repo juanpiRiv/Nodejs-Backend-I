@@ -12,6 +12,7 @@ import methodOverride from 'method-override';
 // Cargar variables de entorno
 dotenv.config();
 
+
 // Configurar Express
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -28,13 +29,16 @@ const hbs = engine({
         allowProtoMethodsByDefault: true
     },
     helpers: {
-        multiply: (a, b) => a * b  // 🔥 Agregamos la función "multiply"
+        multiply: (a, b) => a * b,  
+        json: (context) => JSON.stringify(context, null, 2)  // 🔥 Asegurar que el helper `json` está bien definido
     }
 });
+
 
 app.engine('handlebars', hbs);
 app.set('view engine', 'handlebars');
 app.set('views', path.resolve('src/views'));
+
 
 // Middlewares
 app.use(express.json());

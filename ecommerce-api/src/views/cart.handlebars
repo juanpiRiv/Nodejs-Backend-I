@@ -12,28 +12,79 @@
         </tr>
         {{#each cart.products}}
         <tr>
-            <td><img src="{{this.product.thumbnails.[0]}}" alt="{{this.product.title}}" width="50"></td>
+            <td><img src="{{this.product.thumbnails[0]}}" width="50"></td>
             <td>{{this.product.title}}</td>
             <td>${{this.product.price}}</td>
             <td>
-                <form action="/api/carts/{{../cart._id}}/products/{{this.product._id}}?_method=PUT" method="POST">
-                    <input type="number" name="quantity" value="{{this.quantity}}" min="1">
-                    <button type="submit">Actualizar</button>
-                </form>
+                <input type="number" value="{{this.quantity}}" min="1" class="quantity-input" data-cart-id="{{../cart._id}}" data-product-id="{{this.product._id}}">
+                <button class="update-btn">Actualizar</button>
             </td>
             <td>${{multiply this.product.price this.quantity}}</td>
             <td>
-                <form action="/api/carts/{{../cart._id}}/products/{{this.product._id}}?_method=DELETE" method="POST">
-                    <button type="submit">Eliminar</button>
-                </form>
+                <button class="delete-btn" data-cart-id="{{../cart._id}}" data-product-id="{{this.product._id}}">Eliminar</button>
             </td>
         </tr>
         {{/each}}
     </table>
 
-    <form action="/api/carts/{{cart._id}}/checkout?_method=POST" method="POST">
-        <button type="submit">Finalizar Compra</button>
-    </form>
+    <button id="checkout-btn">Finalizar Compra</button>
+    <button id="empty-cart-btn">Vaciar Carrito</button>
 {{else}}
-    <p>⚠ El carrito está vacío. <a href="/products">Ir a la tienda</a></p>
+    <p>⚠ El carrito está vacío.</p>
 {{/if}}
+
+<script>
+    // Actualizar cantidad de productos sin recargar la página
+    document.querySelectorAll('.update-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+            const input = button.previousElementSibling;
+            const cartId = input.dataset.cartId;
+            const productId = input.dataset.productId;
+            const quantity = input.value;
+
+            const response = await fetch(`/api/carts/${cartId}/products/${productId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: Number(quantity) })
+            });
+
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    });
+
+    // Eliminar producto sin recargar la página
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+            const cartId = button.dataset.cartId;
+            const productId = button.dataset.productId;
+
+            const response = await fetch(`/api/carts/${cartId}/products/${productId}`, { method: 'DELETE' });
+
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    });
+
+    // Finalizar compra
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+        const cartId = "{{cart._id}}";
+        const response = await fetch(`/api/carts/${cartId}/checkout`, { method: 'POST' });
+
+        if (response.ok) {
+            location.href = "/checkout";
+        }
+    });
+
+    // Vaciar carrito
+    document.getElementById('empty-cart-btn').addEventListener('click', async () => {
+        const cartId = "{{cart._id}}";
+        const response = await fetch(`/api/carts/${cartId}`, { method: 'DELETE' });
+
+        if (response.ok) {
+            location.reload();
+        }
+    });
+</script>

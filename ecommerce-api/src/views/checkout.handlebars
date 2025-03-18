@@ -1,3 +1,34 @@
-<h1>Compra Finalizada</h1>
+<h1>¡Compra Finalizada!</h1>
 <p>Gracias por tu compra. Tu pedido ha sido procesado correctamente.</p>
-<a href="/products">Volver a la tienda</a>
+
+<h2>Resumen del Pedido</h2>
+
+<pre>DEBUG: {{json products}}</pre> <!-- 🔥 Verifica que products se recibe -->
+
+{{#if products.length}}
+    <table border="1">
+        <tr>
+            <th>Imagen</th>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+        </tr>
+        {{#each products}}
+        <tr>
+            <td>
+                <img src="{{this.thumbnails}}" alt="{{this.title}}" width="50">
+            </td>
+            <td>{{this.title}}</td>
+            <td>${{this.price}}</td>
+            <td>{{this.quantity}}</td>
+            <td>${{multiply this.price this.quantity}}</td>
+        </tr>
+        {{/each}}
+    </table>
+    <p><strong>Total a pagar: ${{totalPrice}}</strong></p>
+{{else}}
+    <p>⚠ No hay productos en el pedido.</p>
+{{/if}}
+
+<a href="/products">🏠 Volver a la tienda</a>

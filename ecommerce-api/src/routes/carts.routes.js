@@ -17,7 +17,7 @@ router.put('/:cid', updateCart);
 router.put('/:cid/products/:pid', updateProductQuantity);  // ✅ Actualizar cantidad de producto
 router.delete('/:cid/products/:pid', deleteProductFromCart);  // ✅ Eliminar producto del carrito
 router.delete('/:cid', deleteCart);
-router.post('/add-product', addProductSessionCart);
-router.post('/:cid/checkout', checkoutCart);  // ✅ Finalizar compra
-
+router.post('/add-product', addProductSessionCart);  // ✅ Finalizar compra
+router.post('/:cid/checkout', checkoutCart);
+router.get('/:cid/checkout', checkoutCart); 
 export default router;

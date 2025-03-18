@@ -45,6 +45,10 @@ router.get('/products', async (req, res) => {
 // ✅ Ruta para mostrar el carrito en Handlebars
 router.get('/cart', async (req, res) => {
     try {
+        if (!req.session.cartId) {
+            return res.render('cart', { title: "Carrito de Compras", cart: { products: [] } });
+        }
+
         const cart = await Cart.findById(req.session.cartId).populate('products.product');
 
         if (!cart) {
@@ -67,6 +71,12 @@ router.get('/products/:pid', async (req, res) => {
     } catch (error) {
         res.status(500).send('Error al cargar el producto');
     }
+});
+router.get('/checkout', (req, res) => {
+    // Limpiar la sesión del carrito
+    req.session.cartId = null;
+    
+    res.render('checkout', { title: "Compra Finalizada" });
 });
 
 // ✅ Mostrar carrito

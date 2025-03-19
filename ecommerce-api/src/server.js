@@ -11,6 +11,7 @@ import methodOverride from 'method-override';
 import MongoStore from 'connect-mongo';
 
 
+
 // Cargar variables de entorno
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.set('views', path.resolve('src/views'));
 
 
 // Middlewares
+app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));

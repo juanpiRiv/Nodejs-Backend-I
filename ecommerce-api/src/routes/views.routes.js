@@ -72,12 +72,7 @@ router.get('/products/:pid', async (req, res) => {
         res.status(500).send('Error al cargar el producto');
     }
 });
-router.get('/checkout', (req, res) => {
-    // Limpiar la sesión del carrito
-    req.session.cartId = null;
-    
-    res.render('checkout', { title: "Compra Finalizada" });
-});
+
 
 // ✅ Mostrar carrito
 router.get('/carts/:cid', async (req, res) => {

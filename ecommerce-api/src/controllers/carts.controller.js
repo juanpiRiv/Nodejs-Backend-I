@@ -133,6 +133,16 @@ export const updateCart = async (req, res) => {
         const { cid } = req.params;
         const { products } = req.body;
 
+        if (!products || !Array.isArray(products)) {
+            return res.status(400).json({ status: "error", message: "Formato inválido de productos" });
+        }
+
+        const validProducts = await Product.find({ _id: { $in: products.map(p => p.product) } });
+
+        if (validProducts.length !== products.length) {
+            return res.status(400).json({ status: "error", message: "Uno o más productos no existen" });
+        }
+
         const updatedCart = await Cart.findByIdAndUpdate(cid, { products }, { new: true }).populate('products.product');
 
         if (!updatedCart) {
@@ -149,9 +159,10 @@ export const updateCart = async (req, res) => {
 export const updateProductQuantity = async (req, res) => {
     try {
         const { cid, pid } = req.params;
-        const { quantity } = req.body;
+        let { quantity } = req.body;
 
-        if (quantity < 1) {
+        quantity = parseInt(quantity);
+        if (isNaN(quantity) || quantity < 1) {
             return res.status(400).json({ status: "error", message: "Cantidad no válida" });
         }
 
@@ -172,7 +183,6 @@ export const updateProductQuantity = async (req, res) => {
         res.status(500).json({ status: "error", message: error.message });
     }
 };
-
 
 // ✅ Eliminar un producto del carrito
 export const deleteProductFromCart = async (req, res) => {

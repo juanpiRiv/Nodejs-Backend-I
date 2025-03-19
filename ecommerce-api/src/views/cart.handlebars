@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="/css/styles.css">
+
 <h1>Carrito de Compras</h1>
 
 {{#if cart.products.length}}
@@ -19,7 +21,7 @@
                 <input type="number" value="{{this.quantity}}" min="1" class="quantity-input" data-cart-id="{{../cart._id}}" data-product-id="{{this.product._id}}">
                 <button class="update-btn">Actualizar</button>
             </td>
-            <td>${{multiply this.product.price this.quantity}}</td>
+            <td class="total-price">${{multiply this.product.price this.quantity}}</td>
             <td>
                 <button class="delete-btn" data-cart-id="{{../cart._id}}" data-product-id="{{this.product._id}}">Eliminar</button>
             </td>
@@ -34,18 +36,23 @@
 {{/if}}
 
 <script>
-    // Actualizar cantidad de productos sin recargar la página
+    // Actualizar cantidad sin recargar
     document.querySelectorAll('.update-btn').forEach(button => {
         button.addEventListener('click', async () => {
             const input = button.previousElementSibling;
             const cartId = input.dataset.cartId;
             const productId = input.dataset.productId;
-            const quantity = input.value;
+            const quantity = parseInt(input.value);
+
+            if (quantity < 1) {
+                alert("La cantidad debe ser al menos 1");
+                return;
+            }
 
             const response = await fetch(`/api/carts/${cartId}/products/${productId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ quantity: Number(quantity) })
+                body: JSON.stringify({ quantity })
             });
 
             if (response.ok) {
@@ -54,9 +61,11 @@
         });
     });
 
-    // Eliminar producto sin recargar la página
+    // Eliminar producto sin recargar
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.addEventListener('click', async () => {
+            if (!confirm("¿Estás seguro de que quieres eliminar este producto?")) return;
+            
             const cartId = button.dataset.cartId;
             const productId = button.dataset.productId;
 
@@ -68,18 +77,19 @@
         });
     });
 
-// Finalizar compra
-document.getElementById('checkout-btn').addEventListener('click', async () => {
-    const cartId = "{{cart._id}}";
-    const response = await fetch(`/api/carts/${cartId}/checkout`, { method: 'POST' });
-    if (response.ok) {
-        // Redirige a la ruta correcta (opción 1)
-        location.href = `/api/carts/${cartId}/checkout`;
-    }
-});
+    // Finalizar compra
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+        const cartId = "{{cart._id}}";
+        const response = await fetch(`/api/carts/${cartId}/checkout`, { method: 'POST' });
+        if (response.ok) {
+            location.href = `/api/carts/${cartId}/checkout`;
+        }
+    });
 
-    // Vaciar carrito
+    // Vaciar carrito con confirmación
     document.getElementById('empty-cart-btn').addEventListener('click', async () => {
+        if (!confirm("¿Estás seguro de que deseas vaciar el carrito?")) return;
+
         const cartId = "{{cart._id}}";
         const response = await fetch(`/api/carts/${cartId}`, { method: 'DELETE' });
         if (response.ok) {

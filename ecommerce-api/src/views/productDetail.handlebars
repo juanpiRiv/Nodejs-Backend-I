@@ -1,10 +1,12 @@
+<link rel="stylesheet" href="/css/styles.css">
+
 <h1>{{product.title}}</h1>
 <img src="{{product.thumbnails.[0]}}" alt="{{product.title}}" width="200">
 <p><strong>Precio:</strong> ${{product.price}}</p>
 <p><strong>Categoría:</strong> {{product.category}}</p>
 <p><strong>Descripción:</strong> {{product.description}}</p>
 
-<!-- Formulario para seleccionar cantidad y agregar al carrito -->
+<!-- Formulario corregido para agregar al carrito -->
 <form action="/api/carts/add-product" method="POST">
     <input type="hidden" name="productId" value="{{product._id}}">
     <label for="quantity">Cantidad:</label>
@@ -12,4 +14,4 @@
     <button type="submit">Agregar al Carrito</button>
 </form>
 
-<a href="/products">Volver a la lista de productos</a>
+<a href="/products">⬅ Volver a la lista de productos</a>

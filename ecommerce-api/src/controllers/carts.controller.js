@@ -1,4 +1,5 @@
 import Cart from '../models/Cart.model.js';
+import Order from '../models/Order.model.js';
 
 export const createCart = async (req, res) => {
     try {
@@ -42,32 +43,47 @@ export const addProductSessionCart = async (req, res) => {
         console.log("📥 Datos recibidos en addProductSessionCart:", req.body);
 
         const { productId, quantity } = req.body;
-        let cart = await Cart.findById(req.session.cartId);
-
-        if (!cart) {
-            cart = await Cart.create({ products: [] });
-            req.session.cartId = cart._id;
-            console.log("🆕 Nuevo carrito creado con ID:", cart._id);
+        if (!productId || !quantity) {
+            console.error("❌ Error: Faltan datos en la petición");
+            return res.status(400).json({ status: "error", message: "Faltan datos" });
         }
 
-        console.log("🔍 Carrito antes de agregar:", cart);
+        let cart = await Cart.findById(req.session.cartId);
+        if (!cart) {
+            console.log("🛒 No existe carrito en la sesión. Creando uno nuevo...");
+            cart = await Cart.create({ products: [] });
+            req.session.cartId = cart._id;
+            console.log("✅ Nuevo carrito creado:", cart._id);
+        }
 
-        const existingProduct = cart.products.find(p => p.product.toString() === productId);
-        if (existingProduct) {
-            existingProduct.quantity += Number(quantity);
+        console.log("🔍 Carrito antes de agregar productos:", JSON.stringify(cart, null, 2));
+
+        // Verificar si el producto ya existe en el carrito
+        const existingProductIndex = cart.products.findIndex(p => p.product.toString() === productId);
+        if (existingProductIndex !== -1) {
+            // Si existe, actualiza la cantidad
+            cart.products[existingProductIndex].quantity += Number(quantity);
         } else {
+            // Si no existe, lo agregamos
             cart.products.push({ product: productId, quantity: Number(quantity) });
         }
 
-        await cart.save();
+        // Guardamos usando `findOneAndUpdate` para asegurar persistencia en MongoDB
+        const updatedCart = await Cart.findOneAndUpdate(
+            { _id: cart._id },
+            { $set: { products: cart.products } },
+            { new: true, upsert: true }
+        ).populate('products.product');
 
-        console.log("✅ Carrito actualizado:", cart);
+        console.log("✅ Carrito actualizado con nuevos productos:", JSON.stringify(updatedCart, null, 2));
+
         res.redirect('/products');
     } catch (error) {
         console.error("❌ Error en addProductSessionCart:", error);
         res.status(500).json({ status: 'error', message: error.message });
     }
 };
+
 
 // ✅ Obtener un carrito por ID con productos poblados
 export const getCartById = async (req, res) => {
@@ -197,45 +213,41 @@ export const deleteCart = async (req, res) => {
 export const checkoutCart = async (req, res) => {
     try {
         const { cid } = req.params;
-        const cart = await Cart.findById(cid).populate({
-            path: 'products.product',
-            model: 'Product'
-        });
-
-        console.log("🛍️ Carrito en checkout después de populate:", JSON.stringify(cart, null, 2));
+        const cart = await Cart.findById(cid).populate('products.product');
 
         if (!cart || cart.products.length === 0) {
             console.log("⚠ Carrito vacío. Enviando estructura vacía.");
             return res.render("checkout", { title: "Compra Finalizada", products: [], totalPrice: 0 });
         }
 
+        // Extraer los productos para la orden
         const purchasedProducts = cart.products.map(item => ({
-            title: item.product?.title || "Producto desconocido",
-            price: item.product?.price || 0,
-            quantity: item.quantity || 1,
-            thumbnails: Array.isArray(item.product?.thumbnails) && item.product.thumbnails.length
-                ? item.product.thumbnails[0]
-                : 'https://via.placeholder.com/150'
+            product: item.product._id,
+            title: item.product.title,
+            price: item.product.price,
+            quantity: item.quantity,
+            thumbnails: item.product.thumbnails?.[0] || 'https://via.placeholder.com/150'
         }));
 
         const totalPrice = purchasedProducts.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-        console.log("📌 Enviando a Handlebars:", JSON.stringify({ products: purchasedProducts, totalPrice }, null, 2));
-        // ✅ Renderizar ANTES de vaciar el carrito
+        console.log("📌 Enviando a Handlebars:", { products: purchasedProducts, totalPrice });
+
+        // Guardar la orden en la base de datos
+        const newOrder = new Order({
+            cartId: cart._id,
+            products: purchasedProducts,
+            totalPrice
+        });
+        await newOrder.save();
+        console.log("📝 Orden guardada correctamente:", newOrder);
+
+        // Renderizar la vista de checkout con los datos de la compra
         res.render("checkout", {
             title: "Compra Finalizada",
             products: purchasedProducts,
             totalPrice
         });
-
-        // ✅ Vaciar carrito DESPUÉS de renderizar
-        setTimeout(async () => {
-            cart.products = [];
-            await cart.save();
-            req.session.cartId = null;
-        }, 2000);  // Le damos 2 segundos para asegurar que la vista se renderiza correctamente
-
-
     } catch (error) {
         console.error("❌ Error en checkoutCart:", error);
         res.status(500).json({ status: "error", message: error.message });

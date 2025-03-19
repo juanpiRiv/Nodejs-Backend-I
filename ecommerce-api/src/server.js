@@ -8,6 +8,8 @@ import { engine } from 'express-handlebars';
 import path from 'path';
 import session from 'express-session';
 import methodOverride from 'method-override'; 
+import MongoStore from 'connect-mongo';
+
 
 // Cargar variables de entorno
 dotenv.config();
@@ -18,9 +20,13 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(session({
-    secret: 'miclavedeprueba',  // 🔥 Cambiar por una clave más segura
+    secret: 'miclavedeprueba',  // 🔥 Cambia esto en producción
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI, // Usa la misma conexión de MongoDB
+        ttl: 3600 // Tiempo de vida de la sesión en segundos (1 hora)
+    })
 }));
 // Registrar el helper "multiply" para Handlebars
 const hbs = engine({

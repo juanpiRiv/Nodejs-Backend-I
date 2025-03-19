@@ -68,21 +68,20 @@
         });
     });
 
-    // Finalizar compra
-    document.getElementById('checkout-btn').addEventListener('click', async () => {
-        const cartId = "{{cart._id}}";
-        const response = await fetch(`/api/carts/${cartId}/checkout`, { method: 'POST' });
-
-        if (response.ok) {
-            location.href = "/checkout";
-        }
-    });
+// Finalizar compra
+document.getElementById('checkout-btn').addEventListener('click', async () => {
+    const cartId = "{{cart._id}}";
+    const response = await fetch(`/api/carts/${cartId}/checkout`, { method: 'POST' });
+    if (response.ok) {
+        // Redirige a la ruta correcta (opción 1)
+        location.href = `/api/carts/${cartId}/checkout`;
+    }
+});
 
     // Vaciar carrito
     document.getElementById('empty-cart-btn').addEventListener('click', async () => {
         const cartId = "{{cart._id}}";
         const response = await fetch(`/api/carts/${cartId}`, { method: 'DELETE' });
-
         if (response.ok) {
             location.reload();
         }

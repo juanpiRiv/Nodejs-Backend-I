@@ -1,6 +1,5 @@
 import Product from '../models/Product.model.js';
 
-// ✅ Obtener productos con filtros, paginación y ordenamiento
 export const getProducts = async (req, res) => {
     try {
         let { page = 1, limit = 10, sort, query } = req.query;
@@ -28,10 +27,9 @@ export const getProducts = async (req, res) => {
             page,
             limit,
             sort: sortOption,
-            lean: true, // Optimización para obtener JSON plano
+            lean: true,
         };
 
-        // Consulta a MongoDB usando `paginate`
         const result = await Product.paginate(filter, options);
 
         // Construcción de respuesta
@@ -55,7 +53,7 @@ export const getProducts = async (req, res) => {
 };
 
 
-// ✅ Obtener un producto por ID
+
 export const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.pid);
@@ -66,7 +64,7 @@ export const getProductById = async (req, res) => {
     }
 };
 
-// ✅ Agregar un nuevo producto
+
 export const addProduct = async (req, res) => {
     try {
         const product = await Product.create(req.body);
@@ -76,7 +74,7 @@ export const addProduct = async (req, res) => {
     }
 };
 
-// ✅ Actualizar un producto
+
 export const updateProduct = async (req, res) => {
     try {
         const updatedProduct = await Product.findByIdAndUpdate(req.params.pid, req.body, { new: true });
@@ -87,7 +85,7 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-// ✅ Eliminar un producto
+
 export const deleteProduct = async (req, res) => {
     try {
         await Product.findByIdAndDelete(req.params.pid);

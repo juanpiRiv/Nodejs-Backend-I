@@ -12,8 +12,6 @@ export const createCart = async (req, res) => {
         }
 
         const productIds = Array.isArray(selectedProducts) ? selectedProducts : [selectedProducts];
-
-        // 🔥 Verifica si las cantidades son correctas
         const productsWithQuantities = productIds.map(productId => ({
             product: productId,
             quantity: Number(req.body[`quantity_${productId}`]) || 1
@@ -58,13 +56,10 @@ export const addProductSessionCart = async (req, res) => {
 
         console.log("🔍 Carrito antes de agregar productos:", JSON.stringify(cart, null, 2));
 
-        // Verificar si el producto ya existe en el carrito
         const existingProductIndex = cart.products.findIndex(p => p.product.toString() === productId);
         if (existingProductIndex !== -1) {
-            // Si existe, actualiza la cantidad
             cart.products[existingProductIndex].quantity += Number(quantity);
         } else {
-            // Si no existe, lo agregamos
             cart.products.push({ product: productId, quantity: Number(quantity) });
         }
 
@@ -85,12 +80,11 @@ export const addProductSessionCart = async (req, res) => {
 };
 
 
-// ✅ Obtener un carrito por ID con productos poblados
 export const getCartById = async (req, res) => {
     try {
         const cart = await Cart.findById(req.params.cid)
             .populate({
-                path: 'products.product',  // 🔥 Poblar datos del producto
+                path: 'products.product',  // Poblar datos del producto
                 model: 'Product',  // Asegurar referencia a Product
                 select: 'title price thumbnails category'  // Solo traer estos datos
             });
@@ -104,7 +98,7 @@ export const getCartById = async (req, res) => {
 };
 
 
-// ✅ Agregar un producto a un carrito
+
 export const addProductToCart = async (req, res) => {
     try {
         const { cid, pid } = req.params;
@@ -127,7 +121,6 @@ export const addProductToCart = async (req, res) => {
     }
 };
 
-// ✅ Actualizar un carrito con nuevos productos
 export const updateCart = async (req, res) => {
     try {
         const { cid } = req.params;
@@ -184,7 +177,6 @@ export const updateProductQuantity = async (req, res) => {
     }
 };
 
-// ✅ Eliminar un producto del carrito
 export const deleteProductFromCart = async (req, res) => {
     try {
         const { cid, pid } = req.params;
@@ -202,7 +194,7 @@ export const deleteProductFromCart = async (req, res) => {
         res.status(500).json({ status: "error", message: error.message });
     }
 };
-// ✅ Vaciar un carrito
+
 export const deleteCart = async (req, res) => {
     try {
         const { cid } = req.params;

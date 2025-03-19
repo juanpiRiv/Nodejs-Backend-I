@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.use(methodOverride('_method'));  // Permite usar _method en formularios
+router.use(methodOverride('_method')); 
 
 router.post('/', createCart);
 router.get('/:cid', getCartById);
@@ -19,7 +19,6 @@ router.delete('/:cid/products/:pid', deleteProductFromCart);
 router.delete('/:cid', deleteCart);
 router.post('/add-product', addProductSessionCart);
 
-// Configuración unificada para checkout
 router.post('/:cid/checkout', checkoutCart);
 router.get('/:cid/checkout', checkoutCart);
 

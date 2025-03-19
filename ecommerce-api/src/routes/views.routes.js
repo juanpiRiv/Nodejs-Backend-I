@@ -4,12 +4,10 @@ import Cart from '../models/Cart.model.js';
 
 const router = express.Router();
 
-// ✅ Redirigir la ruta raíz ("/") a "/products"
 router.get('/', (req, res) => {
     res.redirect('/products');
 });
 
-// ✅ Mostrar productos con paginación
 router.get('/products', async (req, res) => {
     try {
         const { limit = 10, page = 1, query, sort } = req.query;
@@ -42,7 +40,7 @@ router.get('/products', async (req, res) => {
 });
 
 
-// ✅ Ruta para mostrar el carrito en Handlebars
+
 router.get('/cart', async (req, res) => {
     try {
         if (!req.session.cartId) {
@@ -61,7 +59,6 @@ router.get('/cart', async (req, res) => {
     }
 });
 
-// ✅ Ver detalle de un producto
 router.get('/products/:pid', async (req, res) => {
     try {
         const product = await Product.findById(req.params.pid);
@@ -74,7 +71,6 @@ router.get('/products/:pid', async (req, res) => {
 });
 
 
-// ✅ Mostrar carrito
 router.get('/carts/:cid', async (req, res) => {
     try {
         const cart = await Cart.findById(req.params.cid).populate('products.product');

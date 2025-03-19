@@ -4,7 +4,7 @@ import Product from '../models/Product.model.js';
 
 dotenv.config();
 
-// Conectar a MongoDB
+
 const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI, {
@@ -21,7 +21,7 @@ const connectDB = async () => {
 const seedProducts = async () => {
     await connectDB();
 
-    // Array de productos de prueba
+
     const products = [
         { title: "Laptop Gamer", description: "Laptop potente", code: "LAPTOP1", price: 1500, stock: 10, category: "Tecnología", thumbnails: ["https://via.placeholder.com/150"] },
         { title: "Teclado Mecánico", description: "Teclado RGB", code: "TECLADO1", price: 100, stock: 20, category: "Accesorios", thumbnails: ["https://via.placeholder.com/150"] },
@@ -54,5 +54,5 @@ const seedProducts = async () => {
     }
 };
 
-// Ejecutar la función
+
 seedProducts();

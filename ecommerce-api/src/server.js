@@ -10,22 +10,17 @@ import session from 'express-session';
 import methodOverride from 'method-override'; 
 import MongoStore from 'connect-mongo';
 
-
-
-// Cargar variables de entorno
 dotenv.config();
 
-
-// Configurar Express
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(session({
-    secret: 'miclavedeprueba',  // 🔥 Cambia esto en producción
+    secret: 'miclavedeprueba',  // Cambia esto en producción
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI, // Usa la misma conexión de MongoDB
+        mongoUrl: process.env.MONGO_URI, 
         ttl: 3600 // Tiempo de vida de la sesión en segundos (1 hora)
     })
 }));
@@ -37,7 +32,7 @@ const hbs = engine({
     },
     helpers: {
         multiply: (a, b) => a * b,  
-        json: (context) => JSON.stringify(context, null, 2)  // 🔥 Asegurar que el helper `json` está bien definido
+        json: (context) => JSON.stringify(context, null, 2)  
     }
 });
 
@@ -57,6 +52,9 @@ app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
 
+
+
+
 // Conexión a MongoDB
 const connectDB = async () => {
     try {
@@ -68,7 +66,11 @@ const connectDB = async () => {
     }
 };
 
-// Iniciar el servidor
+
+
+
+
+// Iniciar 
 connectDB().then(() => {
     app.listen(PORT, () => {
         console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);

@@ -84,10 +84,11 @@ export const getCartById = async (req, res) => {
     try {
         const cart = await Cart.findById(req.params.cid)
             .populate({
-                path: 'products.product',  // Poblar datos del producto
-                model: 'Product',  // Asegurar referencia a Product
-                select: 'title price thumbnails category'  // Solo traer estos datos
-            });
+                path: 'products.product',
+                model: 'Product',
+                select: 'title price thumbnails category'
+            })
+            .lean();  // Agregar esto para que Mongoose devuelva un objeto plano
 
         if (!cart) return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
 
@@ -96,8 +97,6 @@ export const getCartById = async (req, res) => {
         res.status(500).json({ status: "error", message: error.message });
     }
 };
-
-
 
 export const addProductToCart = async (req, res) => {
     try {
@@ -178,22 +177,20 @@ export const updateProductQuantity = async (req, res) => {
 };
 
 export const deleteProductFromCart = async (req, res) => {
+    const { cid, pid } = req.params;
     try {
-        const { cid, pid } = req.params;
-
         const cart = await Cart.findById(cid);
-        if (!cart) {
-            return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
-        }
+        if (!cart) return res.status(404).json({ message: "Carrito no encontrado" });
 
         cart.products = cart.products.filter(p => p.product.toString() !== pid);
         await cart.save();
-
-        res.json({ status: "success", cart });
+        
+        res.json({ message: "Producto eliminado del carrito", cart });
     } catch (error) {
-        res.status(500).json({ status: "error", message: error.message });
+        res.status(500).json({ message: "Error en el servidor", error });
     }
 };
+
 
 export const deleteCart = async (req, res) => {
     try {

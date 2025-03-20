@@ -23,22 +23,18 @@ Sigue estos pasos para instalar y configurar el proyecto:
    git clone <URL_DEL_REPOSITORIO>
    cd ecommerce-api
    npm install
-Crea un archivo .env en la raíz del proyecto y configura las variables necesarias (ver Configuración).
-
-
-- **PORT=
-- **MONGO_URI=mongodb://localhost:27017/ecommerce
-- **SESSION_SECRET=tu_secreto_aqui
-
-##Uso
-- **Para iniciar el servidor de desarrollo, usa:
-   ```bash
-  npm run dev
-- **Para iniciar el servidor en producción:
-   ```bash
+   npm run dev
    npm start
 
-## Dependencias
+## Configuración
+El proyecto usa variables de entorno almacenadas en un archivo .env. Asegúrate de definir las siguientes variables:
+
+- **env
+- **PORT=Tu puerto preferido
+- **MONGO_URI=mongodb://localhost:27017/ecommerce (tu base de datos)
+- **SESSION_SECRET=tu_secreto_aqui
+
+##Dependencias
 Este proyecto usa las siguientes tecnologías:
 
 - **Node.js y Express para el backend
@@ -47,3 +43,14 @@ Este proyecto usa las siguientes tecnologías:
 - **Socket.io para comunicación en tiempo real
 - **dotenv para manejar variables de entorno
 
+├── ecommerce-api/
+│   ├── package.json
+│   ├── .env
+│   ├── src/
+│   │   ├── server.js
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── views/
+│   ├── public/

@@ -26,9 +26,17 @@ Sigue estos pasos para instalar y configurar el proyecto:
 Crea un archivo .env en la raíz del proyecto y configura las variables necesarias (ver Configuración).
 
 
-PORT=
-MONGO_URI=mongodb://localhost:27017/ecommerce
-SESSION_SECRET=tu_secreto_aqui
+- **PORT=
+- **MONGO_URI=mongodb://localhost:27017/ecommerce
+- **SESSION_SECRET=tu_secreto_aqui
+
+##Uso
+- **Para iniciar el servidor de desarrollo, usa:
+   ```bash
+  npm run dev
+- **Para iniciar el servidor en producción:
+   ```bash
+   npm start
 
 ## Dependencias
 Este proyecto usa las siguientes tecnologías:
@@ -38,5 +46,15 @@ Este proyecto usa las siguientes tecnologías:
 - **Express Handlebars para vistas
 - **Socket.io para comunicación en tiempo real
 - **dotenv para manejar variables de entorno
-
+├── ecommerce-api/
+│   ├── package.json
+│   ├── .env
+│   ├── src/
+│   │   ├── server.js
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── views/
+│   ├── public/
 

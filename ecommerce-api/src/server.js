@@ -31,7 +31,8 @@ const hbs = engine({
         allowProtoMethodsByDefault: true
     },
     helpers: {
-        multiply: (a, b) => a * b,  
+        multiply: (a, b) => a * b,
+        eq: (a, b) => a === b,  
         json: (context) => JSON.stringify(context, null, 2)  
     }
 });

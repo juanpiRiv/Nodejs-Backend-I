@@ -7,32 +7,50 @@ const router = express.Router();
 router.get('/', (req, res) => {
     res.redirect('/products');
 });
-
 router.get('/products', async (req, res) => {
     try {
-        const { limit = 10, page = 1, query, sort } = req.query;
-        const filter = query ? { category: query } : {}; 
+        const { limit = 10, page = 1, search = "", category = "", sort = "" } = req.query;
+        const filter = search
+            ? {
+                $or: [
+                    { category: { $regex: search, $options: "i" } },
+                    { title: { $regex: search, $options: "i" } },
+                    { status: search.toLowerCase() === "disponible" ? true : false }
+                ]
+            }
+            : {};
+        // Si además se envía category, podrías combinarlo (esto depende de tu lógica)
+        if (category) {
+            // Por ejemplo, puedes añadir la condición directamente
+            filter.category = { $regex: category, $options: "i" };
+        }
+        
         const options = {
             page: parseInt(page),
             limit: parseInt(limit),
             sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {}
         };
 
-        const products = await Product.paginate(filter, options); 
+        const products = await Product.paginate(filter, options);
 
-        console.log("📌 Datos enviados a Handlebars:", products.docs);  // <-- Verifica los datos antes de renderizar
+        console.log("📌 Datos enviados a Handlebars:", products.docs);
 
         res.render('products', {
             title: 'Productos',
-            payload: products.docs,  
+            payload: products.docs,
             totalPages: products.totalPages,
             prevPage: products.prevPage,
             nextPage: products.nextPage,
             page: products.page,
             hasPrevPage: products.hasPrevPage,
             hasNextPage: products.hasNextPage,
-            prevLink: products.hasPrevPage ? `/products?page=${products.prevPage}` : null,
-            nextLink: products.hasNextPage ? `/products?page=${products.nextPage}` : null
+            prevLink: products.hasPrevPage ? `/products?page=${products.prevPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
+            nextLink: products.hasNextPage ? `/products?page=${products.nextPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
+            // Aquí pasas los valores para que se muestren en el formulario
+            search,
+            category,
+            sort,
+            limit
         });
     } catch (error) {
         res.status(500).send('Error al cargar los productos');

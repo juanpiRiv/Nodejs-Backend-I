@@ -1,39 +1,29 @@
 import Product from '../models/Product.model.js';
-
 export const getProducts = async (req, res) => {
     try {
-        let { page = 1, limit = 10, sort, query } = req.query;
-        
-        // Validar que page y limit sean números positivos
+        let { page = 1, limit = 10, sort, search, category } = req.query;
         page = parseInt(page) > 0 ? parseInt(page) : 1;
         limit = parseInt(limit) > 0 ? parseInt(limit) : 10;
 
-        // Filtros mejorados: Buscar por categoría, disponibilidad o nombre
+        // Declara la variable filter
         let filter = {};
-        if (query) {
-            filter = {
-                $or: [
-                    { category: { $regex: query, $options: "i" } }, // Filtra por categoría (insensible a mayúsculas)
-                    { title: { $regex: query, $options: "i" } }, // Filtra por nombre del producto
-                    { status: query.toLowerCase() === "disponible" ? true : false } // Filtra por disponibilidad
-                ]
-            };
+
+        if (search) {
+            filter.title = { $regex: search, $options: "i" };
         }
 
-        // Opciones de ordenamiento (ascendente o descendente por precio)
+        if (category) {
+            // Aquí es donde usamos la asignación
+            filter.category = { $regex: category, $options: "i" };
+        }
+
         const sortOption = sort === "asc" ? { price: 1 } : sort === "desc" ? { price: -1 } : {};
 
-        const options = {
-            page,
-            limit,
-            sort: sortOption,
-            lean: true,
-        };
+        const options = { page, limit, sort: sortOption, lean: true };
 
         const result = await Product.paginate(filter, options);
 
-        // Construcción de respuesta
-        const response = {
+        res.json({
             status: "success",
             payload: result.docs,
             totalPages: result.totalPages,
@@ -42,17 +32,14 @@ export const getProducts = async (req, res) => {
             page: result.page,
             hasPrevPage: result.hasPrevPage,
             hasNextPage: result.hasNextPage,
-            prevLink: result.hasPrevPage ? `/api/products?page=${result.prevPage}&limit=${limit}&sort=${sort}&query=${query}` : null,
-            nextLink: result.hasNextPage ? `/api/products?page=${result.nextPage}&limit=${limit}&sort=${sort}&query=${query}` : null,
-        };
-
-        res.json(response);
+            prevLink: result.hasPrevPage ? `/api/products?page=${result.prevPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
+            nextLink: result.hasNextPage ? `/api/products?page=${result.nextPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
+        });
     } catch (error) {
+        console.error("Error al cargar los productos:", error);
         res.status(500).json({ status: "error", message: error.message });
     }
 };
-
-
 
 export const getProductById = async (req, res) => {
     try {

@@ -2,8 +2,41 @@
 
 <h1>Lista de Productos</h1>
 
-<a href="/cart"><button>🛒 Ver Carrito</button></a>  
+<a href="/cart"><button>🛒 Ver Carrito</button></a>
 
+<!-- FORMULARIO DE FILTROS -->
+<form method="GET" action="/products">
+    <label for="search">Buscar:</label>
+    <input type="text" name="search" id="search" value="{{search}}">
+
+    <label for="category">Categoría:</label>
+    <select name="category" id="category">
+        <option value="" {{#if (eq category "")}}selected{{/if}}>Todas</option>
+        <option value="Almacenamiento" {{#if (eq category "Almacenamiento")}}selected{{/if}}>Almacenamiento</option>
+        <option value="Accesorios" {{#if (eq category "Accesorios")}}selected{{/if}}>Accesorios</option>
+        <option value="Tecnología" {{#if (eq category "Tecnología")}}selected{{/if}}>Tecnología</option>
+        <option value="Muebles" {{#if (eq category "Muebles")}}selected{{/if}}>Muebles</option>
+        <option value="Telefonía" {{#if (eq category "Telefonía")}}selected{{/if}}>Telefonía</option>
+        <option value="Audio" {{#if (eq category "Audio")}}selected{{/if}}>Audio</option>
+        <option value="Hardware" {{#if (eq category "Hardware")}}selected{{/if}}>Hardware</option>
+        <option value="Oficina" {{#if (eq category "Oficina")}}selected{{/if}}>Oficina</option>
+        <option value="Redes" {{#if (eq category "Redes")}}selected{{/if}}>Redes</option>
+    </select>
+
+    <label for="sort">Ordenar por precio:</label>
+    <select name="sort" id="sort">
+        <option value="" {{#if (eq sort "")}}selected{{/if}}>Sin orden</option>
+        <option value="asc" {{#if (eq sort "asc")}}selected{{/if}}>Menor a mayor</option>
+        <option value="desc" {{#if (eq sort "desc")}}selected{{/if}}>Mayor a menor</option>
+    </select>
+
+    <label for="limit">Productos por página:</label>
+    <input type="number" name="limit" id="limit" value="{{limit}}" min="1">
+
+    <button type="submit">Filtrar</button>
+</form>
+
+<!-- TABLA DE PRODUCTOS -->
 <table border="1">
     <tr>
         <th>Imagen</th>
@@ -37,13 +70,13 @@
     {{/each}}
 </table>
 
-
+<!-- PAGINACIÓN -->
 <div>
     {{#if hasPrevPage}}
-        <a href="{{prevLink}}">⬅ Página Anterior</a>
+    <a href="?page={{prevPage}}&limit={{limit}}&sort={{sort}}&query={{query}}">⬅ Página Anterior</a>
     {{/if}}
     <span>Página {{page}} de {{totalPages}}</span>
     {{#if hasNextPage}}
-        <a href="{{nextLink}}">Página Siguiente ➡</a>
+    <a href="?page={{nextPage}}&limit={{limit}}&sort={{sort}}&query={{query}}">Página Siguiente ➡</a>
     {{/if}}
 </div>

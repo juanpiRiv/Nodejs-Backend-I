@@ -43,14 +43,3 @@ Este proyecto usa las siguientes tecnologías:
 - **Socket.io para comunicación en tiempo real
 - **dotenv para manejar variables de entorno
 
-├── ecommerce-api/
-│   ├── package.json
-│   ├── .env
-│   ├── src/
-│   │   ├── server.js
-│   │   ├── config/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── views/
-│   ├── public/

@@ -19,9 +19,9 @@ router.get('/products', async (req, res) => {
                 ]
             }
             : {};
-        // Si además se envía category, podrías combinarlo (esto depende de tu lógica)
+        // podrías combinarlo 
         if (category) {
-            // Por ejemplo, puedes añadir la condición directamente
+            // puedes añadir la condición directamente
             filter.category = { $regex: category, $options: "i" };
         }
 
@@ -46,7 +46,7 @@ router.get('/products', async (req, res) => {
             hasNextPage: products.hasNextPage,
             prevLink: products.hasPrevPage ? `/products?page=${products.prevPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
             nextLink: products.hasNextPage ? `/products?page=${products.nextPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
-            // Aquí pasas los valores para que se muestren en el formulario
+            // pasas los valores para que se muestren en el formulario
             search,
             category,
             sort,

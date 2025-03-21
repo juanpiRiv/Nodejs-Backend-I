@@ -24,7 +24,7 @@ router.get('/products', async (req, res) => {
             // Por ejemplo, puedes añadir la condición directamente
             filter.category = { $regex: category, $options: "i" };
         }
-        
+
         const options = {
             page: parseInt(page),
             limit: parseInt(limit),
@@ -88,15 +88,17 @@ router.get('/products/:pid', async (req, res) => {
     }
 });
 
-
 router.get('/carts/:cid', async (req, res) => {
     try {
-        const cart = await Cart.findById(req.params.cid).populate('products.product');
-        if (!cart) return res.status(404).send('Carrito no encontrado');
-
-        res.render('cart', { title: 'Carrito', cart });
+        const cid = req.params.cid;
+        // Busca el carrito y pobla la información del producto
+        const cart = await Cart.findById(cid).populate('products.product');
+        if (!cart) return res.status(404).render('error', { message: 'Carrito no encontrado' });
+        // Renderiza la vista 'cart' pasando el carrito
+        res.render('cart', { cart });
     } catch (error) {
-        res.status(500).send('Error al cargar el carrito');
+        console.error(error);
+        res.status(500).render('error', { message: 'Error interno del servidor' });
     }
 });
 

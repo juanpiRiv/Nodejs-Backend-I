@@ -1,0 +1,31 @@
+<link rel="stylesheet" href="/css/styles.css">
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito #{{cart._id}}</title>
+</head>
+
+<body>
+    <h1>Carrito #{{cart._id}}</h1>
+    {{#if cart.products.length}}
+    <ul>
+        {{#each cart.products}}
+        <li>
+            <h2>{{this.product.title}}</h2>
+            <p>Precio: ${{this.product.price}}</p>
+            <p>Cantidad: {{this.quantity}}</p>
+            <p>Categoría: {{this.product.category}}</p>
+            {{#if this.product.thumbnails}}
+            <img src="{{this.product.thumbnails.[0]}}" alt="{{this.product.title}}" style="width:150px;height:150px;">
+            {{/if}}
+        </li>
+        {{/each}}
+    </ul>
+    {{else}}
+    <p>El carrito está vacío.</p>
+    {{/if}}
+</body>
+
+</html>

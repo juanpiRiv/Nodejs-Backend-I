@@ -60,11 +60,9 @@
         <td>${{this.price}}</td>
         <td>{{this.category}}</td>
         <td>
-            <form action="/api/carts/add-product" method="POST">
-                <input type="hidden" name="productId" value="{{this._id}}">
-                <input type="number" name="quantity" value="1" min="1">
-                <button type="submit">Agregar al Carrito</button>
-            </form>
+            <!-- Quitar el form. Usar data attributes y clases para JS -->
+            <input type="number" class="product-quantity" value="1" min="1" style="width: 50px; margin-right: 5px;">
+            <button class="add-to-cart-btn" data-product-id="{{this._id}}">Agregar al Carrito</button>
         </td>
     </tr>
     {{/each}}
@@ -80,3 +78,73 @@
     <a href="?page={{nextPage}}&limit={{limit}}&sort={{sort}}&query={{query}}">Página Siguiente ➡</a>
     {{/if}}
 </div>
+
+<!-- Script para manejar la adición asíncrona al carrito -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault(); // Evitar cualquier comportamiento por defecto
+
+                const productId = button.dataset.productId;
+                // Encontrar el input de cantidad asociado (asumiendo que es el elemento hermano anterior)
+                const quantityInput = button.previousElementSibling;
+                const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+
+                if (isNaN(quantity) || quantity < 1) {
+                    alert('Por favor, introduce una cantidad válida.');
+                    return;
+                }
+
+                console.log(`Agregando producto ${productId}, cantidad ${quantity}`);
+
+                try {
+                    const response = await fetch('/api/carts/add-product', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ productId, quantity }),
+                    });
+
+                    const result = await response.json();
+                    const originalButtonText = button.textContent; // Guardar texto original
+
+                    if (response.ok && result.status === 'success') {
+                        console.log(`Producto agregado al carrito! (Carrito ID: ${result.cartId})`);
+                        // Cambiar texto del botón temporalmente para feedback visual
+                        button.textContent = '✅ Agregado!';
+                        button.disabled = true; // Deshabilitar temporalmente
+                        setTimeout(() => {
+                            button.textContent = originalButtonText;
+                            button.disabled = false;
+                        }, 2000); // Volver al estado original después de 2 segundos
+
+                        // Opcional: actualizar un contador de carrito en la UI, etc.
+                    } else {
+                         console.error(`Error al agregar producto: ${result.message || 'Respuesta no exitosa de la API'}`);
+                         // Cambiar texto del botón temporalmente para feedback de error
+                         button.textContent = '❌ Error';
+                         button.disabled = true;
+                         setTimeout(() => {
+                            button.textContent = originalButtonText;
+                            button.disabled = false;
+                         }, 2500);
+                    }
+                } catch (error) {
+                    console.error('Error en fetch al agregar producto:', error);
+                     // Cambiar texto del botón temporalmente para feedback de error de red
+                     const originalButtonText = button.textContent;
+                     button.textContent = '❌ Error Red';
+                     button.disabled = true;
+                     setTimeout(() => {
+                        button.textContent = originalButtonText;
+                        button.disabled = false;
+                     }, 2500);
+                }
+            });
+        });
+    });
+</script>

@@ -1,5 +1,7 @@
-import Cart from '../models/Cart.model.js';
-import Order from '../models/Order.model.js';
+import cartService from '../services/cart.service.js';
+import productService from '../services/product.service.js'; // Importar productService
+import orderService from '../services/order.service.js'; // Importar orderService
+
 
 export const createCart = async (req, res) => {
     try {
@@ -23,8 +25,7 @@ export const createCart = async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'No hay productos válidos para el carrito' });
         }
 
-        const newCart = new Cart({ products: productsWithQuantities });
-        await newCart.save();
+        const newCart = await cartService.createCart({ products: productsWithQuantities });
 
         req.session.cartId = newCart._id;
         console.log("✅ Carrito creado con ID:", newCart._id);
@@ -46,49 +47,53 @@ export const addProductSessionCart = async (req, res) => {
             return res.status(400).json({ status: "error", message: "Faltan datos" });
         }
 
-        let cart = await Cart.findById(req.session.cartId);
+        let cart;
+        cart = await cartService.getCartById(req.session.cartId);
         if (!cart) {
             console.log("🛒 No existe carrito en la sesión. Creando uno nuevo...");
-            cart = await Cart.create({ products: [] });
+            cart = await cartService.createCart({ products: [] });
             req.session.cartId = cart._id;
             console.log("✅ Nuevo carrito creado:", cart._id);
         }
 
         console.log("🔍 Carrito antes de agregar productos:", JSON.stringify(cart, null, 2));
 
-        const existingProductIndex = cart.products.findIndex(p => p.product.toString() === productId);
-        if (existingProductIndex !== -1) {
-            cart.products[existingProductIndex].quantity += Number(quantity);
-        } else {
-            cart.products.push({ product: productId, quantity: Number(quantity) });
+        // Validar que el producto exista y agregarlo
+        const product = await productService.getProductById(productId); // Obtener producto una sola vez
+        if (!product) {
+            console.error("❌ Error: Producto no encontrado con ID:", productId);
+            return res.status(404).json({ status: "error", message: "Producto no encontrado" }); // Usar 404 Not Found
         }
 
-        // Guardamos usando `findOneAndUpdate` para asegurar persistencia en MongoDB
-        const updatedCart = await Cart.findOneAndUpdate(
-            { _id: cart._id },
-            { $set: { products: cart.products } },
-            { new: true, upsert: true }
-        ).populate('products.product');
+        // Agregar el producto al array en memoria
+        // TODO: REFACTOR POTENCIAL: Esta aproximación (modificar array y luego guardar todo)
+        // puede ser ineficiente para carritos grandes y propensa a condiciones de carrera si hay
+        // múltiples requests simultáneos. Una mejor solución sería tener un método en
+        // cartService/DAO como `addItemToCart(cartId, productId, quantity)` que encapsule
+        // la lógica de buscar el item, actualizar cantidad o añadirlo, directamente en la BD.
+        cart.products.push({ product: product._id, quantity: Number(quantity) });
 
-        console.log("✅ Carrito actualizado con nuevos productos:", JSON.stringify(updatedCart, null, 2));
+        // Guardar el carrito completo actualizado en la base de datos
+        const updatedCart = await cartService.updateCart(cart._id, cart.products);
+        if (!updatedCart) {
+             console.error(`❌ Error en addProductSessionCart: No se pudo actualizar el carrito ${cart._id} en la BD`);
+             return res.status(500).json({ status: "error", message: "Error interno al actualizar el carrito" });
+        }
 
-        res.redirect('/products');
+        console.log(`✅ Producto ${productId} (x${quantity}) agregado al carrito ${cart._id} y guardado.`);
+
+        // Respuesta exitosa (podrías devolver el carrito actualizado)
+        res.json({ status: "success", message: "Producto agregado al carrito de sesión", cartId: cart._id });
+
     } catch (error) {
         console.error("❌ Error en addProductSessionCart:", error);
-        res.status(500).json({ status: 'error', message: error.message });
+        res.status(500).json({ status: "error", message: error.message });
     }
-};
-
+}; // Cerrar addProductSessionCart
 
 export const getCartById = async (req, res) => {
     try {
-        const cart = await Cart.findById(req.params.cid)
-            .populate({
-                path: 'products.product',
-                model: 'Product',
-                select: 'title price thumbnails category'
-            })
-            .lean();  // Agregar esto para que Mongoose devuelva un objeto plano
+        const cart = await cartService.getCartById(req.params.cid);
 
         if (!cart) return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
 
@@ -103,17 +108,9 @@ export const addProductToCart = async (req, res) => {
         const { cid, pid } = req.params;
         const { quantity = 1 } = req.body;
 
-        const cart = await Cart.findById(cid);
+        const cart = await cartService.addProductToCart(cid, pid, quantity);
         if (!cart) return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
 
-        const productIndex = cart.products.findIndex(p => p.product.toString() === pid);
-        if (productIndex !== -1) {
-            cart.products[productIndex].quantity += quantity;
-        } else {
-            cart.products.push({ product: pid, quantity });
-        }
-
-        await cart.save();
         res.json({ status: "success", cart });
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });
@@ -129,13 +126,7 @@ export const updateCart = async (req, res) => {
             return res.status(400).json({ status: "error", message: "Formato inválido de productos" });
         }
 
-        const validProducts = await Product.find({ _id: { $in: products.map(p => p.product) } });
-
-        if (validProducts.length !== products.length) {
-            return res.status(400).json({ status: "error", message: "Uno o más productos no existen" });
-        }
-
-        const updatedCart = await Cart.findByIdAndUpdate(cid, { products }, { new: true }).populate('products.product');
+        const updatedCart = await cartService.updateCart(cid, products);
 
         if (!updatedCart) {
             return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
@@ -158,19 +149,12 @@ export const updateProductQuantity = async (req, res) => {
             return res.status(400).json({ status: "error", message: "Cantidad no válida" });
         }
 
-        const cart = await Cart.findById(cid);
+        const cart = await cartService.updateProductQuantity(cid, pid, quantity);
         if (!cart) {
             return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
         }
 
-        const productIndex = cart.products.findIndex(p => p.product.toString() === pid);
-        if (productIndex !== -1) {
-            cart.products[productIndex].quantity = quantity;
-            await cart.save();
-            return res.json({ status: "success", cart });
-        }
-
-        res.status(404).json({ status: "error", message: "Producto no encontrado en el carrito" });
+        res.json({ status: "success", cart });
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });
     }
@@ -179,12 +163,9 @@ export const updateProductQuantity = async (req, res) => {
 export const deleteProductFromCart = async (req, res) => {
     const { cid, pid } = req.params;
     try {
-        const cart = await Cart.findById(cid);
+        const cart = await cartService.deleteProductFromCart(cid, pid);
         if (!cart) return res.status(404).json({ message: "Carrito no encontrado" });
 
-        cart.products = cart.products.filter(p => p.product.toString() !== pid);
-        await cart.save();
-        
         res.json({ message: "Producto eliminado del carrito", cart });
     } catch (error) {
         res.status(500).json({ message: "Error en el servidor", error });
@@ -196,13 +177,10 @@ export const deleteCart = async (req, res) => {
     try {
         const { cid } = req.params;
 
-        const cart = await Cart.findById(cid);
+        const cart = await cartService.deleteCart(cid);
         if (!cart) {
             return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
         }
-
-        cart.products = [];
-        await cart.save();
 
         res.json({ status: "success", message: "Carrito vaciado correctamente" });
     } catch (error) {
@@ -212,7 +190,7 @@ export const deleteCart = async (req, res) => {
 export const checkoutCart = async (req, res) => {
     try {
         const { cid } = req.params;
-        const cart = await Cart.findById(cid).populate('products.product');
+        const cart = await cartService.getCartById(cid);
 
         if (!cart || cart.products.length === 0) {
             console.log("⚠ Carrito vacío. Enviando estructura vacía.");
@@ -233,13 +211,25 @@ export const checkoutCart = async (req, res) => {
         console.log("📌 Enviando a Handlebars:", { products: purchasedProducts, totalPrice });
 
         // Guardar la orden en la base de datos
-        const newOrder = new Order({
+        const newOrder = await orderService.createOrder({
             cartId: cart._id,
             products: purchasedProducts,
             totalPrice
         });
-        await newOrder.save();
-        console.log("📝 Orden guardada correctamente:", newOrder);
+        console.log("📝 Orden guardada correctamente:", newOrder._id); // Log ID de la orden
+
+        // Vaciar el carrito en la base de datos después de crear la orden
+        try {
+            await cartService.updateCart(cid, []); // Actualizar con array vacío de productos
+            console.log(`🛒 Carrito ${cid} vaciado después de la compra.`);
+        } catch (updateError) {
+            // Loggear el error pero continuar, la orden ya se creó
+            console.error(`⚠️ Error al intentar vaciar el carrito ${cid} después de la compra:`, updateError);
+        }
+
+        // Limpiar el ID del carrito de la sesión
+        req.session.cartId = null;
+        console.log("🔑 ID de carrito eliminado de la sesión.");
 
         // Renderizar la vista de checkout con los datos de la compra
         res.render("checkout", {

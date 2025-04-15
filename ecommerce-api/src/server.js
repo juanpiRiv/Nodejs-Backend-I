@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 8080;
 app.use(session({
     secret: 'miclavedeprueba',  // Cambia esto en producción
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI, 
         ttl: 3600 // Tiempo de vida de la sesión en segundos (1 hora)

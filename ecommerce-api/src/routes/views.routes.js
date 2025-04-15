@@ -1,6 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.model.js';
-import Cart from '../models/Cart.model.js';
+// import Cart from '../models/Cart.model.js'; // Ya no se usa directamente aquí
+import cartService from '../services/cart.service.js'; // Importar cartService
 
 const router = express.Router();
 
@@ -46,14 +47,14 @@ router.get('/products', async (req, res) => {
             hasNextPage: products.hasNextPage,
             prevLink: products.hasPrevPage ? `/products?page=${products.prevPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
             nextLink: products.hasNextPage ? `/products?page=${products.nextPage}&limit=${limit}&sort=${sort}&search=${search}&category=${category}` : null,
-            // pasas los valores para que se muestren en el formulario
             search,
             category,
             sort,
             limit
         });
     } catch (error) {
-        res.status(500).send('Error al cargar los productos');
+        console.error("❌ Error en GET /products:", error); // Log detallado del error
+        res.status(500).send('Error interno al cargar los productos. Intente nuevamente más tarde.'); // Mensaje más informativo al usuario
     }
 });
 
@@ -62,18 +63,27 @@ router.get('/products', async (req, res) => {
 router.get('/cart', async (req, res) => {
     try {
         if (!req.session.cartId) {
-            return res.render('cart', { title: "Carrito de Compras", cart: { products: [] } });
+            // Si no hay cartId en sesión, renderiza carrito vacío
+            return res.render('cart', { title: "Carrito de Compras", cart: null, products: [] }); // Pasar cart como null y products vacío
         }
 
-        const cart = await Cart.findById(req.session.cartId).populate('products.product');
+        // Usar cartService para obtener el carrito por ID (asumiendo que getCartById ya popula los productos)
+        const cart = await cartService.getCartById(req.session.cartId);
 
         if (!cart) {
-            return res.render('cart', { title: "Carrito de Compras", cart: { products: [] } });
+            // Si el carrito no se encuentra en la BD (quizás fue eliminado), limpiar sesión y renderizar vacío
+            req.session.cartId = null; // Opcional: limpiar ID inválido de la sesión
+            return res.render('cart', { title: "Carrito de Compras", cart: null, products: [] }); // Pasar cart como null y products vacío
         }
 
-        res.render('cart', { title: "Carrito de Compras", cart });
+        // Asegurarse de que la plantilla reciba los productos correctamente
+        // El servicio ya debería poblarlos, pero verificamos la estructura
+        const products = cart.products || [];
+
+        res.render('cart', { title: "Carrito de Compras", cart, products }); // Pasar cart y products
     } catch (error) {
-        res.status(500).send('Error al cargar el carrito');
+        console.error("❌ Error en GET /cart:", error);
+        res.status(500).send('Error interno al cargar el carrito. Intente nuevamente más tarde.');
     }
 });
 
@@ -84,21 +94,26 @@ router.get('/products/:pid', async (req, res) => {
 
         res.render('productDetail', { title: product.title, product });
     } catch (error) {
-        res.status(500).send('Error al cargar el producto');
+        console.error(`❌ Error en GET /products/${req.params.pid}:`, error);
+        res.status(500).send('Error interno al cargar el detalle del producto. Intente nuevamente más tarde.');
     }
 });
 
-router.get('/carts/:cid', async (req, res) => {
+router.get('/carts/:cid', async (req, res) => { // Esta ruta parece redundante con /cart si se usa la sesión, pero la dejamos por si se accede por URL directa
     try {
         const cid = req.params.cid;
-        // Busca el carrito y pobla la información del producto
-        const cart = await Cart.findById(cid).populate('products.product');
+        // Usar cartService también aquí por consistencia
+        const cart = await cartService.getCartById(cid);
         if (!cart) return res.status(404).render('error', { message: 'Carrito no encontrado' });
-        // Renderiza la vista 'cart' pasando el carrito
-        res.render('cart', { cart });
+
+        // Asegurarse de pasar los productos a la plantilla
+        const products = cart.products || [];
+        // Renderiza la vista 'cart' pasando el carrito y los productos
+        res.render('cart', { title: `Carrito ${cid}`, cart, products }); // Pasar cart y products
     } catch (error) {
-        console.error(error);
-        res.status(500).render('error', { message: 'Error interno del servidor' });
+        console.error(`❌ Error en GET /carts/${req.params.cid}:`, error);
+        // No hay vista 'error', enviar texto plano
+        res.status(500).send('Error interno al cargar el carrito especificado. Intente nuevamente más tarde.');
     }
 });
 

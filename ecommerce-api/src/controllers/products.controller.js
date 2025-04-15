@@ -1,11 +1,11 @@
-import Product from '../models/Product.model.js';
+import productService from '../services/product.service.js'; // Importar el servicio
+
 export const getProducts = async (req, res) => {
     try {
         let { page = 1, limit = 10, sort, search, category } = req.query;
         page = parseInt(page) > 0 ? parseInt(page) : 1;
         limit = parseInt(limit) > 0 ? parseInt(limit) : 10;
 
-        // Declara la variable filter
         let filter = {};
 
         if (search) {
@@ -13,7 +13,6 @@ export const getProducts = async (req, res) => {
         }
 
         if (category) {
-            // Aquí es donde usamos la asignación
             filter.category = { $regex: category, $options: "i" };
         }
 
@@ -21,7 +20,7 @@ export const getProducts = async (req, res) => {
 
         const options = { page, limit, sort: sortOption, lean: true };
 
-        const result = await Product.paginate(filter, options);
+        const result = await productService.getProducts(filter, options); // Usar el servicio
 
         res.json({
             status: "success",
@@ -43,7 +42,7 @@ export const getProducts = async (req, res) => {
 
 export const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.pid);
+        const product = await productService.getProductById(req.params.pid); // Usar el servicio
         if (!product) return res.status(404).json({ status: "error", message: "Producto no encontrado" });
         res.json({ status: "success", product });
     } catch (error) {
@@ -51,20 +50,18 @@ export const getProductById = async (req, res) => {
     }
 };
 
-
 export const addProduct = async (req, res) => {
     try {
-        const product = await Product.create(req.body);
+        const product = await productService.addProduct(req.body); // Usar el servicio
         res.status(201).json({ status: "success", product });
     } catch (error) {
         res.status(400).json({ status: "error", message: error.message });
     }
 };
 
-
 export const updateProduct = async (req, res) => {
     try {
-        const updatedProduct = await Product.findByIdAndUpdate(req.params.pid, req.body, { new: true });
+        const updatedProduct = await productService.updateProduct(req.params.pid, req.body); // Usar el servicio
         if (!updatedProduct) return res.status(404).json({ status: "error", message: "Producto no encontrado" });
         res.json({ status: "success", product: updatedProduct });
     } catch (error) {
@@ -72,10 +69,9 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-
 export const deleteProduct = async (req, res) => {
     try {
-        await Product.findByIdAndDelete(req.params.pid);
+        await productService.deleteProduct(req.params.pid); // Usar el servicio
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });

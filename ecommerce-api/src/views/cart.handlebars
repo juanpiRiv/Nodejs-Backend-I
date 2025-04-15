@@ -14,7 +14,13 @@
         </tr>
         {{#each cart.products}}
         <tr>
-            <td><img src="{{this.product.thumbnails.[0]}}" width="50"></td>
+            <td>
+                {{#if this.product.thumbnails.[0]}}
+                    <img src="{{this.product.thumbnails.[0]}}" width="50">
+                {{else}}
+                    <span>No image</span>
+                {{/if}}
+            </td>
             <td>{{this.product.title}}</td>
             <td>${{this.product.price}}</td>
             <td>

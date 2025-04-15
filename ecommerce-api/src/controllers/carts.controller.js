@@ -9,21 +9,20 @@ export const createCart = async (req, res) => {
 
         const { selectedProducts } = req.body;
 
-        if (!selectedProducts || selectedProducts.length === 0) {
-            return res.status(400).json({ status: 'error', message: 'No se seleccionaron productos' });
+
+        let productsWithQuantities = [];
+
+        if (selectedProducts && selectedProducts.length > 0) {
+            const productIds = Array.isArray(selectedProducts) ? selectedProducts : [selectedProducts];
+            productsWithQuantities = productIds.map(productId => ({
+                product: productId,
+                quantity: Number(req.body[`quantity_${productId}`]) || 1
+            }));
         }
 
-        const productIds = Array.isArray(selectedProducts) ? selectedProducts : [selectedProducts];
-        const productsWithQuantities = productIds.map(productId => ({
-            product: productId,
-            quantity: Number(req.body[`quantity_${productId}`]) || 1
-        }));
 
         console.log("🛒 Productos que se guardarán en el carrito:", productsWithQuantities);
 
-        if (productsWithQuantities.length === 0) {
-            return res.status(400).json({ status: 'error', message: 'No hay productos válidos para el carrito' });
-        }
 
         const newCart = await cartService.createCart({ products: productsWithQuantities });
 
@@ -239,6 +238,15 @@ export const checkoutCart = async (req, res) => {
         });
     } catch (error) {
         console.error("❌ Error en checkoutCart:", error);
+        res.status(500).json({ status: "error", message: error.message });
+    }
+};
+
+export const getAllCarts = async (req, res) => {
+    try {
+        const carts = await cartService.getAllCarts();
+        res.json({ status: "success", carts });
+    } catch (error) {
         res.status(500).json({ status: "error", message: error.message });
     }
 };

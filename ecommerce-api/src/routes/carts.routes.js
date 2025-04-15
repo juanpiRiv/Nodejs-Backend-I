@@ -3,13 +3,14 @@ import methodOverride from 'method-override';
 import { 
     createCart, getCartById, addProductToCart, updateCart, 
     updateProductQuantity, deleteProductFromCart, deleteCart, 
-    addProductSessionCart, checkoutCart 
+    addProductSessionCart, checkoutCart, getAllCarts
 } from '../controllers/carts.controller.js';
 
 const router = express.Router();
 
 router.use(methodOverride('_method')); 
 
+router.get('/', getAllCarts);
 router.post('/', createCart);
 router.get('/:cid', getCartById);
 router.post('/:cid/products/:pid', addProductToCart);

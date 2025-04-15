@@ -51,12 +51,16 @@ class CartDAO {
     }
 
     async deleteCart(cid) {
-        const cart = await Cart.findById(cid);
+        return await Cart.findById(cid);
         if (!cart) return null;
 
         cart.products = [];
         await cart.save();
         return cart;
+    }
+
+    async getAllCarts() {
+        return await Cart.find().populate('products.product').lean();
     }
 }
 

@@ -28,6 +28,10 @@ class CartService {
     async deleteCart(cid) {
         return await cartDAO.deleteCart(cid);
     }
+
+    async getAllCarts() {
+        return await cartDAO.getAllCarts();
+    }
 }
 
 export default new CartService();
